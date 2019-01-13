@@ -1,8 +1,8 @@
 #[macro_use]
-extern crate vst2;
+extern crate vst;
 
-use vst2::buffer::AudioBuffer;
-use vst2::plugin::{Plugin, Info, Category};
+use vst::buffer::AudioBuffer;
+use vst::plugin::{Plugin, Info, Category};
 
 struct DigiDist {
     threshold: f32
@@ -70,7 +70,7 @@ impl Plugin for DigiDist {
         }
     }
 
-    fn process(&mut self, buffer: AudioBuffer<f32>) {
+    fn process(&mut self, buffer: &mut AudioBuffer<f32>) {
         // For each buffer, transform the samples
         for (input_buffer, output_buffer) in buffer.zip() {
             for (input_sample, output_sample) in input_buffer.iter().zip(output_buffer) {

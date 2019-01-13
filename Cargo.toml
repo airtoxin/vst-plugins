@@ -5,7 +5,8 @@ authors = ["airtoxin <airtoxin@icloud.com>"]
 edition = "2018"
 
 [dependencies]
-vst2 = "0.0.1"
+vst = "*"
+time = "0.1.42"
 
 [lib]
 name = "digidist"
