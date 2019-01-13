@@ -10,4 +10,4 @@ time = "0.1.42"
 
 [lib]
 name = "digidist"
-crate-type = ["dylib"]
+crate-type = ["cdylib"]
