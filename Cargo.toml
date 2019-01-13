@@ -5,3 +5,8 @@ authors = ["airtoxin <airtoxin@icloud.com>"]
 edition = "2018"
 
 [dependencies]
+vst2 = "0.0.1"
+
+[lib]
+name = "digidist"
+crate-type = ["dylib"]

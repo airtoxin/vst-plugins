@@ -1,2 +1,4 @@
+*.vst
+
 /target
 **/*.rs.bk
