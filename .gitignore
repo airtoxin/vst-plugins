@@ -1,4 +1,4 @@
 *.vst
 
-/target
+*/target
 **/*.rs.bk

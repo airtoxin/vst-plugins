@@ -1,2 +1,3 @@
-# digidist
-Writing an Audio Plugin in Rust. Sample program
+# vst-plugins
+
+Writing VST audio plugin in Rust
