@@ -1,0 +1,14 @@
+[package]
+name = "whisper"
+version = "0.1.0"
+authors = ["airtoxin <airtoxin@icloud.com>"]
+edition = "2018"
+
+[dependencies]
+vst = "0.0.2"
+time = "0.1.42"
+rand = "0.6.4"
+
+[lib]
+name = "whisper"
+crate-type = ["cdylib"]
