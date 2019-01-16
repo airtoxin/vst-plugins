@@ -1,37 +1,91 @@
 #[macro_use]
 extern crate vst;
 
-use vst::plugin::{Info, Plugin};
+use vst::plugin::{Info, Plugin, Category};
 use vst::buffer::AudioBuffer;
+use vst::event::Event;
+use vst::api::Events;
 use rand::random;
 
-#[derive(Default)]
-struct Whisper;
+enum MidiStatus {
+    On,
+    Off
+}
 
-// We're implementing a trait `Plugin` that does all the VST-y stuff for us.
+impl MidiStatus {
+    fn from(status: u8) -> Option<Self> {
+        match status {
+            128 => Some(MidiStatus::Off),
+            144 => Some(MidiStatus::On),
+            _ => None
+        }
+    }
+}
+
+#[derive(Default)]
+struct Whisper {
+    notes: u8
+}
+
+impl Whisper {
+    fn process_midi_event(&mut self, data: [u8; 3]) {
+        match MidiStatus::from(data[0]) {
+            Some(MidiStatus::Off) => self.process_note_off(),
+            Some(MidiStatus::On) => self.process_note_on(),
+            _ => (),
+        }
+    }
+
+    fn process_note_on(&mut self) {
+        self.notes += 1;
+    }
+
+    fn process_note_off(&mut self) {
+        self.notes -= 1;
+    }
+}
+
 impl Plugin for Whisper {
     fn get_info(&self) -> Info {
         Info {
             name: "Whisper".to_string(),
             vendor: "airtoxin".to_string(),
             unique_id: 1337342,
-
-            // For now, fill in the rest of our fields with `Default` info.
+            inputs: 0,
+            outputs: 2,
+            category: Category::Synth,
+            parameters: 0,
+            initial_delay: 0,
             ..Default::default()
         }
     }
 
     fn process(&mut self, buffer: &mut AudioBuffer<f32>) {
-        for (_, output_buffer) in buffer.zip() {
-            // Let's iterate over every sample in our channel.
-            for output_sample in output_buffer {
-                // For every sample, we want to add a random value from
-                // -1.0 to 1.0.
-                *output_sample = (random::<f32>() - 0.5f32) * 2f32;
+        let (_, output_buffer) = buffer.split();
+
+        if self.notes == 0 {
+            for output_channel in output_buffer.into_iter() {
+                for output_sample in output_channel {
+                    *output_sample = 0.0;
+                }
+            }
+        } else {
+            for output_channel in output_buffer.into_iter() {
+                for output_sample in output_channel {
+                    *output_sample = (random::<f32>() - 0.5f32) * 2f32;
+                }
+            }
+        }
+    }
+
+    fn process_events(&mut self, events: &Events) {
+        for event in events.events() {
+            match event.into() {
+                Event::Midi(ev) => self.process_midi_event(ev.data),
+                _ => (),
             }
         }
     }
 }
 
-// Make sure you call this, or nothing will happen.
 plugin_main!(Whisper);
