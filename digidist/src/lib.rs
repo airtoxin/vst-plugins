@@ -71,7 +71,6 @@ impl Plugin for DigiDist {
     }
 
     fn process(&mut self, buffer: &mut AudioBuffer<f32>) {
-        // For each buffer, transform the samples
         for (input_buffer, output_buffer) in buffer.zip() {
             for (input_sample, output_sample) in input_buffer.iter().zip(output_buffer) {
 

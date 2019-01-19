@@ -1,0 +1,11 @@
+[package]
+name = "sin_synth"
+version = "0.1.0"
+authors = ["airtoxin <airtoxin@icloud.com>"]
+edition = "2018"
+
+[dependencies]
+vst = "0.0.2"
+
+[lib]
+crate-type = ["cdylib"]
