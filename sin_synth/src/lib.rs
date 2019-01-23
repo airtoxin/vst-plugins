@@ -1,17 +1,18 @@
 #[macro_use]
 extern crate vst;
 
-use vst::plugin::{Info, Plugin, Category};
+use vst::api::Events;
 use vst::buffer::AudioBuffer;
 use vst::event::Event;
-use vst::api::Events;
-use rand::random;
+use vst::plugin::{Category, Info, Plugin};
 
 use std::f64::consts::PI;
 
+const TAU: f64 = PI * 2.0;
+
 enum MidiStatus {
     On,
-    Off
+    Off,
 }
 
 impl MidiStatus {
@@ -19,7 +20,7 @@ impl MidiStatus {
         match status {
             128 => Some(MidiStatus::Off),
             144 => Some(MidiStatus::On),
-            _ => None
+            _ => None,
         }
     }
 }
@@ -28,7 +29,7 @@ impl MidiStatus {
 struct SinSynth {
     notes: u8,
     time: f64,
-    sample_rate: f64
+    sample_rate: f64,
 }
 
 impl SinSynth {
@@ -51,9 +52,11 @@ impl SinSynth {
     fn time_per_sample(&self) -> f64 {
         1.0 / self.sample_rate
     }
-}
 
-const TAU: f64 = PI * 2.0;
+    fn get_sine_signal(&self, time: f64, frequency: f64) -> f64 {
+        (time * frequency * TAU).sin()
+    }
+}
 
 impl Plugin for SinSynth {
     fn get_info(&self) -> Info {
@@ -89,8 +92,13 @@ impl Plugin for SinSynth {
         } else {
             for output_channel in output_buffer.into_iter() {
                 for output_sample in output_channel {
-                    let signal = (time_buffer * 220.0f64 * TAU).sin();
-                    *output_sample = signal as f32;
+                    let signal = (self.get_sine_signal(time_buffer, 220.0)
+                        + self.get_sine_signal(time_buffer, 220.0 * 2.0) / 2.0
+                        + self.get_sine_signal(time_buffer, 220.0 * 3.0) / 3.0
+                        + self.get_sine_signal(time_buffer, 220.0 * 4.0) / 4.0
+                        + self.get_sine_signal(time_buffer, 220.0 * 5.0) / 5.0)
+                        / 5.0;
+                        *output_sample = signal as f32;
                     time_buffer += per_sample;
                 }
             }
