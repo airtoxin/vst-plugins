@@ -77,7 +77,7 @@ impl Plugin for SinSynth {
     fn process(&mut self, buffer: &mut AudioBuffer<f32>) {
         let (_, output_buffer) = buffer.split();
 
-        let mut time = self.time;
+        let mut time_buffer = self.time;
         let per_sample = self.time_per_sample();
 
         if self.notes == 0 {
@@ -89,9 +89,9 @@ impl Plugin for SinSynth {
         } else {
             for output_channel in output_buffer.into_iter() {
                 for output_sample in output_channel {
-                    let signal = (time * 220.0f64 * TAU).sin();
+                    let signal = (time_buffer * 220.0f64 * TAU).sin();
                     *output_sample = signal as f32;
-                    time += per_sample;
+                    time_buffer += per_sample;
                 }
             }
         }
