@@ -27,7 +27,7 @@ impl MidiStatus {
 
 #[derive(Default)]
 struct SinSynth {
-    notes: u8,
+    note: Option<u8>,
     time: f64,
     sample_rate: f64,
 }
@@ -35,18 +35,20 @@ struct SinSynth {
 impl SinSynth {
     fn process_midi_event(&mut self, data: [u8; 3]) {
         match MidiStatus::from(data[0]) {
-            Some(MidiStatus::Off) => self.process_note_off(),
-            Some(MidiStatus::On) => self.process_note_on(),
+            Some(MidiStatus::Off) => self.process_note_off(data[1]),
+            Some(MidiStatus::On) => self.process_note_on(data[1]),
             _ => (),
         }
     }
 
-    fn process_note_on(&mut self) {
-        self.notes += 1;
+    fn process_note_on(&mut self, note: u8) {
+        self.note = Some(note);
     }
 
-    fn process_note_off(&mut self) {
-        self.notes -= 1;
+    fn process_note_off(&mut self, note: u8) {
+        if self.note == Some(note) {
+            self.note = None
+        };
     }
 
     fn time_per_sample(&self) -> f64 {
@@ -56,6 +58,13 @@ impl SinSynth {
     fn get_sine_signal(&self, time: f64, frequency: f64) -> f64 {
         (time * frequency * TAU).sin()
     }
+}
+
+fn midi_pitch_to_freq(pitch: u8) -> f64 {
+    const A4_PITCH: i8 = 69;
+    const A4_FREQ: f64 = 440.0;
+
+    ((f64::from(pitch as i8 - A4_PITCH)) / 12.).exp2() * A4_FREQ
 }
 
 impl Plugin for SinSynth {
@@ -83,23 +92,29 @@ impl Plugin for SinSynth {
         let mut time_buffer = self.time;
         let per_sample = self.time_per_sample();
 
-        if self.notes == 0 {
-            for output_channel in output_buffer.into_iter() {
-                for output_sample in output_channel {
-                    *output_sample = 0.0;
+        match self.note {
+            None => {
+                for output_channel in output_buffer.into_iter() {
+                    for output_sample in output_channel {
+                        *output_sample = 0.0;
+                    }
                 }
-            }
-        } else {
-            for output_channel in output_buffer.into_iter() {
-                for output_sample in output_channel {
-                    let signal = (self.get_sine_signal(time_buffer, 220.0)
-                        + self.get_sine_signal(time_buffer, 220.0 * 2.0) / 2.0
-                        + self.get_sine_signal(time_buffer, 220.0 * 3.0) / 3.0
-                        + self.get_sine_signal(time_buffer, 220.0 * 4.0) / 4.0
-                        + self.get_sine_signal(time_buffer, 220.0 * 5.0) / 5.0)
-                        / 5.0;
+            },
+            Some(note) => {
+                for output_channel in output_buffer.into_iter() {
+                    for output_sample in output_channel {
+                        let harmonics: Vec<_> = (1..100).collect();
+                        let signal = harmonics.iter()
+                            .map(|x| *x as f64)
+                            .map(|h| self.get_sine_signal(time_buffer, midi_pitch_to_freq(note) * h) / h)
+                            .fold(0., |mut acc, h| {
+                                acc += h;
+                                acc
+                            }) / harmonics.len() as f64;
+
                         *output_sample = signal as f32;
-                    time_buffer += per_sample;
+                        time_buffer += per_sample;
+                    }
                 }
             }
         }
