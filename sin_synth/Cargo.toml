@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 vst = "0.0.2"
-time = "0.1.42"
+time = "0.2.0"
 
 [lib]
 name = "sin_synth"
